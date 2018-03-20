@@ -116,7 +116,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="LICENSE" />
+    <None Include="LICENSE.md" />
     <None Include="README.md" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
