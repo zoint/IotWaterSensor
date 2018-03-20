@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Net.Http;
 using Windows.ApplicationModel.Background;
 using Windows.Devices.Gpio;
 using Windows.System.Threading;
+using MadworldStudios.Kookye.Drivers;
 
 namespace IotWaterSensor
 {
@@ -17,6 +14,8 @@ namespace IotWaterSensor
         private GpioPin pin;
         private ThreadPoolTimer timer;
 
+        private WaterSensor _waterSensor;
+
         public void Run(IBackgroundTaskInstance taskInstance)
         {
             deferral = taskInstance.GetDeferral();
@@ -26,15 +25,22 @@ namespace IotWaterSensor
         }
         private void InitGPIO()
         {
-            pin = GpioController.GetDefault().OpenPin(LED_PIN);
-            pin.Write(GpioPinValue.High);
-            pin.SetDriveMode(GpioPinDriveMode.Output);
+            _waterSensor = new WaterSensor();
         }
 
         private void Timer_Tick(ThreadPoolTimer timer)
         {
-            value = (value == GpioPinValue.High) ? GpioPinValue.Low : GpioPinValue.High;
-            pin.Write(value);
+            //TODO: read from _waterSensor
+
+            //adc_value = readadc(photo_ch, SPICLK, SPIMOSI, SPIMISO, SPICS)
+            //if adc_value == 0:
+            //         print"no water\n"
+            //elif adc_value> 0 and adc_value<30 :
+            //         print"it is raindrop\n"
+            //elif adc_value>= 30 and adc_value<200 :
+            //         print"it is water flow"
+            //         print"water level:" + str("%.1f" % (adc_value / 200.* 100)) + "%\n"
+            //#print "adc_value= " +str(adc_value)+"\n"
         }
     }
 }

@@ -121,6 +121,12 @@
       <Name>Windows IoT Extensions for the UWP</Name>
     </SDKReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MadworldStudios.Kookye\MadworldStudios.Kookye.csproj">
+      <Project>{a3bb93c7-e62d-4549-9082-31061cb36eac}</Project>
+      <Name>MadworldStudios.Kookye</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
