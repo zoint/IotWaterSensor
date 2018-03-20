@@ -5,7 +5,6 @@
     This meant to be a C# driver for the Kookye Water Level sensor for the Smart Home IOT Sensor Kit.     
 */
 using Windows.Devices.Gpio;
-using Windows.System.Threading;
 
 namespace MadworldStudios.Kookye.Drivers
 {
@@ -18,14 +17,14 @@ namespace MadworldStudios.Kookye.Drivers
         private const int SPIMOSI = 10;
         private const int SPICS = 8;
 
+        //photoresistor connected to adc #0
+        private const int PHOTO_CH = 0;
+
         private GpioPin _spiclkPin;
         private GpioPin _spmisoPin;
         private GpioPin _spimosiPin;
-        private GpioPin _spicsPin;
+        private GpioPin _spicsPin;      
         
-        //photoresistor connected to adc #0
-        private const int photo_ch = 0;
-
         public WaterSensor()
         {
             InitGPIO();
@@ -35,69 +34,81 @@ namespace MadworldStudios.Kookye.Drivers
         {
             //initialize the ports
             var controller = GpioController.GetDefault();
-            
+
+            //TODO: Figure it if I need to implement these in C#? - Don't think so as of now.
             //GPIO.setwarnings(False)
             //GPIO.cleanup()			#clean up at the end of your script
             //GPIO.setmode(GPIO.BCM)		#to specify whilch pin numbering system
-            //set up the SPI interface pins
 
-            //GPIO.setup(SPIMOSI, GPIO.OUT)
-            _spimosiPin = controller.OpenPin(SPIMOSI);
+            //set up the SPI interface pins
+            _spimosiPin = controller.OpenPin(SPIMOSI);//GPIO.setup(SPIMOSI, GPIO.OUT)
             _spimosiPin.SetDriveMode(GpioPinDriveMode.Output);
 
-            //GPIO.setup(SPIMISO, GPIO.IN)
-            _spmisoPin = controller.OpenPin(SPIMISO);
+            _spmisoPin = controller.OpenPin(SPIMISO); //GPIO.setup(SPIMISO, GPIO.IN)
             _spmisoPin.SetDriveMode(GpioPinDriveMode.Input);
 
-            //GPIO.setup(SPICLK, GPIO.OUT)
-            _spiclkPin = controller.OpenPin(SPICLK);
+            _spiclkPin = controller.OpenPin(SPICLK); //GPIO.setup(SPICLK, GPIO.OUT)
             _spiclkPin.SetDriveMode(GpioPinDriveMode.Output);
 
-            //GPIO.setup(SPICS, GPIO.OUT)
-            _spicsPin = controller.OpenPin(SPICS);
+            _spicsPin = controller.OpenPin(SPICS); //GPIO.setup(SPICS, GPIO.OUT)
             _spicsPin.SetDriveMode(GpioPinDriveMode.Output);
         }
 
-        public int ReadAdc(int adcNumb, int clockPin, int mosipin, int cspin)
+        public double GetWaterLevelPercentage()
         {
-            //TODO: Finish converting this python code
-            // CODE FROM waterlevel.py
-            //def readadc(adcnum, clockpin, mosipin, misopin, cspin):
-                //if ((adcnum > 7) or(adcnum < 0)):
-                //        return -1
-                //GPIO.output(cspin, True)
+            var adcValue = ReadAdc();
+            return (adcValue / 200) * 100;
+        }
 
-                //GPIO.output(clockpin, False)  # start clock low
-                //GPIO.output(cspin, False)     # bring CS low
+        private int ReadAdc() //def readadc(adcnum, clockpin, mosipin, misopin, cspin):
+        {
+            if(PHOTO_CH > 7 || PHOTO_CH < 0) //if ((adcnum > 7) or(adcnum < 0)):
+            {
+                return -1;
+            }
 
-                //commandout = adcnum
-                //commandout |= 0x18  # start bit + single-ended bit
-                //commandout <<= 3    # we only need to send 5 bits here
-                //for i in range(5):
-                //        if (commandout & 0x80):
-                //                GPIO.output(mosipin, True)
-                //        else:
-                //                GPIO.output(mosipin, False)
-                //        commandout <<= 1
-                //        GPIO.output(clockpin, True)
-                //        GPIO.output(clockpin, False)
+            //GPIO.output(cspin, True)
+            _spicsPin.Write(GpioPinValue.High);
+            //GPIO.output(clockpin, False)  # start clock low
+            _spiclkPin.Write(GpioPinValue.Low);
+            //GPIO.output(cspin, False)     # bring CS low
+            _spicsPin.Write(GpioPinValue.Low);            
+            
+            var commandout = PHOTO_CH;  //commandout = adcnum
+            commandout |= 0x18; //commandout |= 0x18  # start bit + single-ended bit
+            commandout <<= 3; //commandout <<= 3    # we only need to send 5 bits here
 
-                //adcout = 0
-                //# read in one empty bit, one null bit and 10 ADC bits
-                //for i in range(12):
-                //        GPIO.output(clockpin, True)
-                //        GPIO.output(clockpin, False)
-                //        adcout <<= 1
-                //        if (GPIO.input(misopin)):
-                //                adcout |= 0x1
+            for (int i = 0; i < 5; i++)  //for i in range(5):
+            {              
+                if ((commandout & 0x80) != 0) //if (commandout & 0x80):    
+                    _spimosiPin.Write(GpioPinValue.High);  //GPIO.output(mosipin, True)         
+                else  // else:
+                    _spimosiPin.Write(GpioPinValue.Low); //  GPIO.output(mosipin, False)
 
-                //GPIO.output(cspin, True)
+                commandout <<= 1; //commandout <<= 1
 
+                _spiclkPin.Write(GpioPinValue.High);  //GPIO.output(clockpin, True)
+                _spiclkPin.Write(GpioPinValue.Low);  //GPIO.output(clockpin, False)
+            }
 
-                //adcout >>= 1       # first bit is 'null' so drop it
-                //return adcout
+            var adcout = 0; //adcout = 0
 
-            return 0;
+            //# read in one empty bit, one null bit and 10 ADC bits
+            for (int i = 0; i < 12; i++) //for i in range(12):
+            {   //GPIO.output(clockpin, True)
+                _spiclkPin.Write(GpioPinValue.High);
+                //GPIO.output(clockpin, False)
+                _spiclkPin.Write(GpioPinValue.Low);
+                adcout <<= 1;
+                
+                if (_spmisoPin.Read() == GpioPinValue.High) //if (GPIO.input(misopin)):
+                    adcout |= 0x1;
+            }
+
+            _spicsPin.Write(GpioPinValue.High); //GPIO.output(cspin, True)
+
+            adcout >>= 1; //first bit is 'null' so drop it
+            return adcout; //return adcout
         }
     }
 }
