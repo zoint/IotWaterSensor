@@ -79,8 +79,9 @@ namespace MadworldStudios.Kookye.Drivers
             commandout <<= 3; //commandout <<= 3    # we only need to send 5 bits here
 
             for (int i = 0; i < 5; i++)  //for i in range(5):
-            {              
-                if ((commandout & 0x80) != 0) //if (commandout & 0x80):    
+            {
+                
+                if (commandout < 768 && commandout != 0) //if (commandout & 0x80):    
                     _spimosiPin.Write(GpioPinValue.High);  //GPIO.output(mosipin, True)         
                 else  // else:
                     _spimosiPin.Write(GpioPinValue.Low); //  GPIO.output(mosipin, False)

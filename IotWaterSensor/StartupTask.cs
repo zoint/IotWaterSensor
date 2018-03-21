@@ -21,8 +21,7 @@ namespace IotWaterSensor
         {
             deferral = taskInstance.GetDeferral();
             InitGPIO();
-            timer = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick, TimeSpan.FromMilliseconds(500));
-            
+            timer = ThreadPoolTimer.CreatePeriodicTimer(Timer_Tick, TimeSpan.FromMilliseconds(500));            
         }
         private void InitGPIO()
         {
